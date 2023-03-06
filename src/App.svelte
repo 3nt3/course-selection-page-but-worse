@@ -1,0 +1,246 @@
+<script lang="ts">
+    let id: number | null;
+    let birthDate: string | null;
+    let error = false;
+    let primarySelection: string | null = null;
+    let secondarySelection: string | null = null;
+    let selectionStep: number = 0;
+    let done = false;
+
+    let data: object | null = null;
+    // let data: object | null = JSON.parse(
+    //     '{"id":"4009","stufe":"8","gebdat":"2005-11-16","erstwahl":null,"zweitwahl":null,"subjects":[{"fach":"Informatik"},{"fach":"\\u00d6kologie"},{"fach":"Cultura Studies"},{"fach":"Spanisch"},{"fach":"Franz\\u00f6sisch"}]}'
+    // );
+    let loading = false;
+
+    const emojis = {
+        Informatik: "🧑‍💻",
+        Ökologie: "🌱",
+        "Cultural Studies": "🇺🇸",
+        Spanisch: "🇪🇸",
+        Französisch: "🇫🇷",
+        Latein: "📜",
+    };
+
+    async function fetchUserInfo() {
+        loading = true;
+        const res = await fetch("https://rz.gymhaan.de/q2/json/wahlen.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                id,
+                gebdat: birthDate,
+            }),
+        });
+
+        data = await res.json();
+        loading = false;
+
+        // determine if request was successful
+        if (!res.ok || !data["id"]) {
+            error = true;
+        }
+
+
+        console.log(data);
+    }
+
+    async function submit() {
+        loading = true;
+        const res = await fetch("https://rz.gymhaan.de/q2/json/wahlen.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                id,
+                gebdat: birthDate,
+                erstwahl: primarySelection,
+                zweitwahl: secondarySelection,
+            }),
+        });
+        loading = false;
+        done = true;
+
+        console.log(await res.json());
+    }
+</script>
+
+<main>
+    <div id="form">
+        {#if error}
+            <div id="error">Joa nee eher nicht bro</div>
+        {/if}
+        {#if loading}
+            Loading...
+        {:else if data}
+            {#if done}
+                <h1>Fertig.</h1>
+            {:else}
+                <h1>Wahlen für Stufe {data["stufe"]}</h1>
+                <h2>{selectionStep === 0 ? "Erstwahl" : "Zweitwahl"}</h2>
+                <div id="subject-choices">
+                    {#each data["subjects"] as subject}
+                        <button
+                            class="subject"
+                            on:click={() => {
+                                selectionStep === 0
+                                    ? (primarySelection = subject["fach"])
+                                    : (secondarySelection = subject["fach"]);
+                            }}
+                            class:selected={selectionStep === 0
+                                ? primarySelection === subject["fach"]
+                                : secondarySelection === subject["fach"]}
+                        >
+                            <div class="subject-icon">
+                                {emojis[subject["fach"]] || "?"}
+                            </div>
+                            <div class="subject-name">{subject["fach"]}</div>
+                        </button>
+                    {/each}
+                </div>
+                <button
+                    id="selection-step-advance"
+                    disabled={primarySelection === null}
+                    on:click={() => {
+                        if (selectionStep === 0) {
+                            selectionStep = 1;
+                        } else {
+                            submit();
+                        }
+                    }}>Weiter</button
+                >
+            {/if}
+        {:else}
+            <form on:submit|preventDefault={fetchUserInfo}>
+                <label for="id">Schüler-ID</label>
+                <input name="id" type="number" bind:value={id} />
+                <label for="birthDate">Geburtsdatum</label>
+                <input name="birthDate" type="date" bind:value={birthDate} />
+                <input
+                    type="submit"
+                    value="Anmelden"
+                    disabled={!(birthDate && id)}
+                />
+            </form>
+        {/if}
+    </div>
+</main>
+
+<style lang="scss">
+    main {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #e2e8f0;
+
+        color: #1e293b;
+        font-size: 18px;
+    }
+
+    #form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 500px;
+        padding: 3rem;
+        border-radius: 1rem;
+        background-color: #f8fafc;
+        gap: 1rem;
+
+        filter: drop-shadow(0 25px 25px rgb(0 0 0 / 0.15));
+
+        * {
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 400;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-weight: 400;
+            margin: 0;
+        }
+
+        input[type="submit"] {
+            background-color: #6d28d9;
+            color: #ede9fe;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+
+            padding: 0.8rem;
+        }
+        // disabled
+        input[type="submit"]:disabled {
+            background-color: #f1f5f9;
+        }
+    }
+
+    #error {
+        background-color: #ef4444;
+        width: 100%;
+
+        border-radius: 0.5rem;
+        padding: 1rem;
+
+        color: #fef2f2;
+    }
+
+    #subject-choices {
+        display: grid;
+        grid-template-columns: 50% 50%;
+        gap: 1rem;
+        .subject {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            text-align: center;
+            border: 3px solid #e2e8f0;
+            padding: 0.5rem;
+            background-color: #f8fafc;
+            transition: border-color 0.2s ease-in-out;
+
+            cursor: pointer;
+
+            &.selected {
+                border-color: #6d28d9 !important;
+            }
+
+            .subject-icon {
+                font-size: 3rem;
+                color: #94a3b8; // fallback for the question mark
+            }
+        }
+    }
+    #selection-step-advance {
+        background-color: #6d28d9;
+        color: #ede9fe;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        transition: background-color 0.2s ease-in-out;
+
+        padding: 0.8rem;
+        cursor: pointer;
+    }
+    // disabled
+    #selection-step-advance:disabled {
+        background-color: #f1f5f9;
+        cursor: not-allowed;
+    }
+</style>
