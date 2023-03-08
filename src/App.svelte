@@ -2,15 +2,15 @@
     let id: number | null;
     let birthDate: string | null;
     let error = false;
-    let primarySelection: string | null = null;
+    // let primarySelection: string | null = null;
+    let primarySelection: string | null = "Ökologie";
     let secondarySelection: string | null = null;
-    let selectionStep: number = 0;
     let done = false;
 
-    let data: object | null = null;
-    // let data: object | null = JSON.parse(
-    //     '{"id":"4009","stufe":"8","gebdat":"2005-11-16","erstwahl":null,"zweitwahl":null,"subjects":[{"fach":"Informatik"},{"fach":"\\u00d6kologie"},{"fach":"Cultura Studies"},{"fach":"Spanisch"},{"fach":"Franz\\u00f6sisch"}]}'
-    // );
+    // let data: object | null = null;
+    let data: object | null = JSON.parse(
+        '{"id":"4009","stufe":"8","gebdat":"2005-11-16","erstwahl":"Ökologie","zweitwahl":null,"subjects":[{"fach":"Informatik"},{"fach":"\\u00d6kologie"},{"fach":"Cultural Studies"},{"fach":"Spanisch"},{"fach":"Franz\\u00f6sisch"}]}'
+    );
     let loading = false;
 
     const emojis = {
@@ -43,6 +43,8 @@
             error = true;
         }
 
+        primarySelection = data["erstwahl"];
+        secondarySelection = data["zweitwahl"];
 
         console.log(data);
     }
@@ -80,19 +82,52 @@
                 <h1>Fertig.</h1>
             {:else}
                 <h1>Wahlen für Stufe {data["stufe"]}</h1>
-                <h2>{selectionStep === 0 ? "Erstwahl" : "Zweitwahl"}</h2>
+                <div>
+                    {#if data["erstwahl"] || data["zweitwahl"]}
+                        <h3>Bisher</h3>
+                    {/if}
+                    {#if data["erstwahl"]}
+                        Erstwahl: {data["erstwahl"]} {emojis[data["erstwahl"]]}
+                    {/if}
+                    {#if data["zweitwahl"]}
+                        Zweitwahl: {data["zweitwahl"]}
+                        {emojis[data["zweitwahl"]]}
+                    {/if}
+                </div>
+                <h2>Erstwahl</h2>
                 <div id="subject-choices">
                     {#each data["subjects"] as subject}
                         <button
                             class="subject"
                             on:click={() => {
-                                selectionStep === 0
-                                    ? (primarySelection = subject["fach"])
-                                    : (secondarySelection = subject["fach"]);
+                                primarySelection = subject["fach"];
+                                if (secondarySelection === primarySelection) {
+                                    secondarySelection = null;
+                                }
                             }}
-                            class:selected={selectionStep === 0
-                                ? primarySelection === subject["fach"]
-                                : secondarySelection === subject["fach"]}
+                            class:selected={primarySelection ===
+                                subject["fach"]}
+                        >
+                            <div class="subject-icon">
+                                {emojis[subject["fach"]] || "?"}
+                            </div>
+                            <div class="subject-name">{subject["fach"]}</div>
+                        </button>
+                    {/each}
+                </div>
+                <h2>Zweitwahl</h2>
+                <div id="subject-choices">
+                    {#each data["subjects"] as subject}
+                        <button
+                            class="subject"
+                            on:click={() => {
+                                secondarySelection = subject["fach"];
+                                if (secondarySelection === primarySelection) {
+                                    primarySelection = null;
+                                }
+                            }}
+                            class:selected={secondarySelection ===
+                                subject["fach"]}
                         >
                             <div class="subject-icon">
                                 {emojis[subject["fach"]] || "?"}
@@ -103,13 +138,10 @@
                 </div>
                 <button
                     id="selection-step-advance"
-                    disabled={primarySelection === null}
+                    disabled={primarySelection === null ||
+                        secondarySelection === null}
                     on:click={() => {
-                        if (selectionStep === 0) {
-                            selectionStep = 1;
-                        } else {
-                            submit();
-                        }
+                        // TODO
                     }}>Weiter</button
                 >
             {/if}
@@ -134,7 +166,8 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        min-height: 100vh;
+        padding: 2rem;
         background-color: #e2e8f0;
 
         color: #1e293b;
@@ -167,6 +200,11 @@
         }
 
         h2 {
+            font-weight: 400;
+            margin: 0;
+        }
+
+        h3 {
             font-weight: 400;
             margin: 0;
         }
