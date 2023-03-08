@@ -44,6 +44,7 @@
         // determine if request was successful
         if (!res.ok || !data["id"]) {
             error = true;
+            data = null;
         }
 
         primarySelection = data["erstwahl"];
@@ -171,9 +172,9 @@
             <h1>Wahlen Wahlpflichtfächer</h1>
             <form on:submit|preventDefault={fetchUserInfo}>
                 <label for="id">Schüler-ID</label>
-                <input name="id" type="number" bind:value={id} />
+                <input name="id" type="number" placeholder="1264" bind:value={id} />
                 <label for="birthDate">Geburtsdatum</label>
-                <input name="birthDate" type="date" bind:value={birthDate} />
+                <input name="birthDate" type="date" placeholder="13.12.2007" bind:value={birthDate} />
                 <input
                     type="submit"
                     value="Anmelden"
@@ -332,6 +333,8 @@
             h1 {
                 font-size: 1.5rem;
             }
+
+            padding: 1.5rem;
         }
 
         #subject-choices {
