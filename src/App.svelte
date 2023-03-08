@@ -96,7 +96,7 @@
                 <h1>Wahlen für Stufe {data["stufe"]}</h1>
                 <div id="former-choices">
                     {#if data["erstwahl"] || data["zweitwahl"]}
-                        <h3>Bisher</h3>
+                        <h2>Bisher</h2>
                     {/if}
                     {#if data["erstwahl"]}
                         <p>
@@ -274,6 +274,7 @@
             padding: 0.5rem;
             background-color: #f8fafc;
             transition: border-color 0.2s ease-in-out;
+            margin: 0;
 
             cursor: pointer;
 
@@ -320,5 +321,22 @@
         text-transform: uppercase;
         padding: 1rem;
         text-align: center;
+    }
+
+    @media (max-width: 600px) {
+        main {
+            padding: 1rem;
+        }
+
+        #form {
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        #subject-choices {
+            gap: 0.5rem;
+
+        }
     }
 </style>
