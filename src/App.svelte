@@ -13,6 +13,7 @@
     //     '{"id":"4009","stufe":"8","gebdat":"2005-11-16","erstwahl":"Ökologie","zweitwahl":null,"subjects":[{"fach":"Informatik"},{"fach":"\\u00d6kologie"},{"fach":"Cultural Studies"},{"fach":"Spanisch"},{"fach":"Franz\\u00f6sisch"}]}'
     // );
     let loading = false;
+    $: secondarySelectionAvailable = ((data || {})["stufe"] || "") !== "6";
 
     const emojis = {
         Informatik: "🧑‍💻",
@@ -27,7 +28,7 @@
         error = false;
         errorMessage = null;
         loading = true;
-        const res = await fetch("https://rz.gymhaan.de/q2/json/wahlen.php", {
+        const res = await fetch("https://rz.gymhaan.de/q2/wahlen/wahlen.php", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -59,7 +60,7 @@
             error = false;
             errorMessage = null;
             const res = await fetch(
-                "https://rz.gymhaan.de/q2/json/wahlen.php",
+                "https://rz.gymhaan.de/q2/wahlen/wahlen.php",
                 {
                     method: "POST",
                     headers: {
@@ -83,7 +84,7 @@
 </script>
 
 <main>
-    <div id="form">
+    <div id="form" class:expanded-form={secondarySelectionAvailable && data}>
         {#if error}
             <div id="error">Joa nee eher nicht bro</div>
         {/if}
@@ -112,56 +113,79 @@
                         </p>
                     {/if}
                 </div>
-                <h2>Erstwahl</h2>
-                <div id="subject-choices">
-                    {#each data["subjects"] as subject}
-                        <button
-                            class="subject"
-                            on:click={() => {
-                                primarySelection = subject["fach"];
-                                if (secondarySelection === primarySelection) {
-                                    secondarySelection = null;
-                                }
-                            }}
-                            class:selected={primarySelection ===
-                                subject["fach"]}
-                        >
-                            <div class="subject-icon">
-                                {emojis[subject["fach"]] || "?"}
+                <div id="choices">
+                    <div class="choice">
+                        {#if secondarySelectionAvailable}
+                            <h2>Erstwahl</h2>
+                        {/if}
+                        <div id="subject-choices">
+                            {#each data["subjects"] as subject}
+                                <button
+                                    class="subject"
+                                    on:click={() => {
+                                        primarySelection = subject["fach"];
+                                        if (
+                                            secondarySelection ===
+                                            primarySelection
+                                        ) {
+                                            secondarySelection = null;
+                                        }
+                                    }}
+                                    class:selected={primarySelection ===
+                                        subject["fach"]}
+                                >
+                                    <div class="subject-icon">
+                                        {emojis[subject["fach"]] || "?"}
+                                    </div>
+                                    <div class="subject-name">
+                                        {subject["fach"]}
+                                    </div>
+                                </button>
+                            {/each}
+                        </div>
+                    </div>
+                    {#if secondarySelectionAvailable}
+                        <div class="choice">
+                            <h2>Zweitwahl</h2>
+                            <div id="subject-choices">
+                                {#each data["subjects"] as subject}
+                                    <button
+                                        class="subject"
+                                        on:click={() => {
+                                            secondarySelection =
+                                                subject["fach"];
+                                            if (
+                                                secondarySelection ===
+                                                primarySelection
+                                            ) {
+                                                primarySelection = null;
+                                            }
+                                        }}
+                                        class:selected={secondarySelection ===
+                                            subject["fach"]}
+                                    >
+                                        <div class="subject-icon">
+                                            {emojis[subject["fach"]] || "?"}
+                                        </div>
+                                        <div class="subject-name">
+                                            {subject["fach"]}
+                                        </div>
+                                    </button>
+                                {/each}
                             </div>
-                            <div class="subject-name">{subject["fach"]}</div>
-                        </button>
-                    {/each}
-                </div>
-                <h2>Zweitwahl</h2>
-                <div id="subject-choices">
-                    {#each data["subjects"] as subject}
-                        <button
-                            class="subject"
-                            on:click={() => {
-                                secondarySelection = subject["fach"];
-                                if (secondarySelection === primarySelection) {
-                                    primarySelection = null;
-                                }
-                            }}
-                            class:selected={secondarySelection ===
-                                subject["fach"]}
-                        >
-                            <div class="subject-icon">
-                                {emojis[subject["fach"]] || "?"}
-                            </div>
-                            <div class="subject-name">{subject["fach"]}</div>
-                        </button>
-                    {/each}
+                        </div>
+                    {/if}
                 </div>
                 <button
-                    id="selection-step-advance"
+                    id="submit-button"
                     disabled={primarySelection === null ||
-                        secondarySelection === null}
+                        (secondarySelection === null &&
+                            secondarySelectionAvailable)}
                     on:click={() => {
                         if (
                             primarySelection !== null &&
-                            secondarySelection !== null
+                            (secondarySelection !== null ||
+                                !secondarySelectionAvailable)
                         ) {
                             submit();
                         }
@@ -172,9 +196,19 @@
             <h1>Wahlen Wahlpflichtfächer</h1>
             <form on:submit|preventDefault={fetchUserInfo}>
                 <label for="id">Schüler-ID</label>
-                <input name="id" type="number" placeholder="1264" bind:value={id} />
+                <input
+                    name="id"
+                    type="number"
+                    placeholder="1264"
+                    bind:value={id}
+                />
                 <label for="birthDate">Geburtsdatum</label>
-                <input name="birthDate" type="date" placeholder="13.12.2007" bind:value={birthDate} />
+                <input
+                    name="birthDate"
+                    type="date"
+                    placeholder="13.12.2007"
+                    bind:value={birthDate}
+                />
                 <input
                     type="submit"
                     value="Anmelden"
@@ -212,6 +246,22 @@
 
         filter: drop-shadow(0 25px 25px rgb(0 0 0 / 0.15));
 
+        &.expanded-form {
+            max-width: 1200px;
+            #choices {
+                display: flex;
+                flex-direction: row;
+                gap: 4rem;
+                .choice {
+                    flex: 1;
+                }
+            }
+
+            #submit-button {
+                width: 50%;
+            }
+        }
+
         * {
             width: 100%;
         }
@@ -224,11 +274,6 @@
         }
 
         h2 {
-            font-weight: 400;
-            margin: 0;
-        }
-
-        h3 {
             font-weight: 400;
             margin: 0;
         }
@@ -289,7 +334,7 @@
             }
         }
     }
-    #selection-step-advance {
+    #submit-button {
         background-color: #6d28d9;
         color: #ede9fe;
         border: none;
@@ -302,7 +347,7 @@
         cursor: pointer;
     }
     // disabled
-    #selection-step-advance:disabled {
+    #submit-button:disabled {
         background-color: #f1f5f9;
         cursor: not-allowed;
     }
@@ -339,7 +384,21 @@
 
         #subject-choices {
             gap: 0.5rem;
+        }
 
+        .expanded-form {
+            #choices {
+                flex-direction: column !important;
+                gap: 2rem !important;
+                .choice {
+                    flex: 1;
+                    gap: 1rem;
+                }
+            }
+
+            #submit-button {
+                width: 100%;
+            }
         }
     }
 </style>
