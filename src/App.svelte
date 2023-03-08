@@ -2,15 +2,16 @@
     let id: number | null;
     let birthDate: string | null;
     let error = false;
-    // let primarySelection: string | null = null;
-    let primarySelection: string | null = "Ökologie";
+    let errorMessage: string | null = null;
+    let primarySelection: string | null = null;
+    // let primarySelection: string | null = "Ökologie";
     let secondarySelection: string | null = null;
     let done = false;
 
-    // let data: object | null = null;
-    let data: object | null = JSON.parse(
-        '{"id":"4009","stufe":"8","gebdat":"2005-11-16","erstwahl":"Ökologie","zweitwahl":null,"subjects":[{"fach":"Informatik"},{"fach":"\\u00d6kologie"},{"fach":"Cultural Studies"},{"fach":"Spanisch"},{"fach":"Franz\\u00f6sisch"}]}'
-    );
+    let data: object | null = null;
+    // let data: object | null = JSON.parse(
+    //     '{"id":"4009","stufe":"8","gebdat":"2005-11-16","erstwahl":"Ökologie","zweitwahl":null,"subjects":[{"fach":"Informatik"},{"fach":"\\u00d6kologie"},{"fach":"Cultural Studies"},{"fach":"Spanisch"},{"fach":"Franz\\u00f6sisch"}]}'
+    // );
     let loading = false;
 
     const emojis = {
@@ -23,6 +24,8 @@
     };
 
     async function fetchUserInfo() {
+        error = false;
+        errorMessage = null;
         loading = true;
         const res = await fetch("https://rz.gymhaan.de/q2/json/wahlen.php", {
             method: "POST",
@@ -50,23 +53,31 @@
     }
 
     async function submit() {
-        loading = true;
-        const res = await fetch("https://rz.gymhaan.de/q2/json/wahlen.php", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                id,
-                gebdat: birthDate,
-                erstwahl: primarySelection,
-                zweitwahl: secondarySelection,
-            }),
-        });
-        loading = false;
-        done = true;
-
-        console.log(await res.json());
+        try {
+            loading = true;
+            error = false;
+            errorMessage = null;
+            const res = await fetch(
+                "https://rz.gymhaan.de/q2/json/wahlen.php",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id: data["id"],
+                        gebdat: data["gebdat"],
+                        erstwahl: primarySelection,
+                        zweitwahl: secondarySelection,
+                    }),
+                }
+            );
+            loading = false;
+            done = true;
+        } catch (e) {
+            error = true;
+            errorMessage = e.message;
+        }
     }
 </script>
 
@@ -79,19 +90,25 @@
             Loading...
         {:else if data}
             {#if done}
-                <h1>Fertig.</h1>
+                <h1>Fertig 🎉</h1>
+                <a href="/" id="back-link">Zurück</a>
             {:else}
                 <h1>Wahlen für Stufe {data["stufe"]}</h1>
-                <div>
+                <div id="former-choices">
                     {#if data["erstwahl"] || data["zweitwahl"]}
                         <h3>Bisher</h3>
                     {/if}
                     {#if data["erstwahl"]}
-                        Erstwahl: {data["erstwahl"]} {emojis[data["erstwahl"]]}
+                        <p>
+                            Erstwahl: {data["erstwahl"]}
+                            {emojis[data["erstwahl"]]}
+                        </p>
                     {/if}
                     {#if data["zweitwahl"]}
-                        Zweitwahl: {data["zweitwahl"]}
-                        {emojis[data["zweitwahl"]]}
+                        <p>
+                            Zweitwahl: {data["zweitwahl"]}
+                            {emojis[data["zweitwahl"]]}
+                        </p>
                     {/if}
                 </div>
                 <h2>Erstwahl</h2>
@@ -141,11 +158,17 @@
                     disabled={primarySelection === null ||
                         secondarySelection === null}
                     on:click={() => {
-                        // TODO
+                        if (
+                            primarySelection !== null &&
+                            secondarySelection !== null
+                        ) {
+                            submit();
+                        }
                     }}>Weiter</button
                 >
             {/if}
         {:else}
+            <h1>Wahlen Wahlpflichtfächer</h1>
             <form on:submit|preventDefault={fetchUserInfo}>
                 <label for="id">Schüler-ID</label>
                 <input name="id" type="number" bind:value={id} />
@@ -180,7 +203,7 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        max-width: 500px;
+        max-width: 600px;
         padding: 3rem;
         border-radius: 1rem;
         background-color: #f8fafc;
@@ -280,5 +303,22 @@
     #selection-step-advance:disabled {
         background-color: #f1f5f9;
         cursor: not-allowed;
+    }
+
+    #former-choices {
+        p {
+            margin: 0;
+        }
+    }
+
+    #back-link {
+        display: block;
+        background-color: #6d28d9;
+        color: #ede9fe;
+        font-weight: bold;
+        border-radius: 0.5rem;
+        text-transform: uppercase;
+        padding: 1rem;
+        text-align: center;
     }
 </style>
