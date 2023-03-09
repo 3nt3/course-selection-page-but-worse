@@ -8,10 +8,10 @@
     let secondarySelection: string | null = null;
     let done = false;
 
-    let data: object | null = null;
-    // let data: object | null = JSON.parse(
-    //     '{"id":"4009","stufe":"8","gebdat":"2005-11-16","erstwahl":"Ökologie","zweitwahl":null,"subjects":[{"fach":"Informatik"},{"fach":"\\u00d6kologie"},{"fach":"Cultural Studies"},{"fach":"Spanisch"},{"fach":"Franz\\u00f6sisch"}]}'
-    // );
+    // let data: object | null = null;
+    let data: object | null = JSON.parse(
+        '{"id":"4009","stufe":"8","gebdat":"2005-11-16","erstwahl":"Ökologie","zweitwahl":null,"subjects":[{"fach":"Informatik"},{"fach":"\\u00d6kologie"},{"fach":"Cultural Studies"},{"fach":"Spanisch"},{"fach":"Franz\\u00f6sisch"}]}'
+    );
     let loading = false;
     $: secondarySelectionAvailable = ((data || {})["stufe"] || "") !== "6";
 
@@ -101,16 +101,16 @@
                         <h2>Bisher</h2>
                     {/if}
                     {#if data["erstwahl"]}
-                        <p>
+                        <div>
                             Erstwahl: {data["erstwahl"]}
                             {emojis[data["erstwahl"]]}
-                        </p>
+                        </div>
                     {/if}
                     {#if data["zweitwahl"]}
-                        <p>
+                        <div>
                             Zweitwahl: {data["zweitwahl"]}
                             {emojis[data["zweitwahl"]]}
-                        </p>
+                        </div>
                     {/if}
                 </div>
                 <div id="choices">
@@ -275,7 +275,7 @@
 
         h2 {
             font-weight: 400;
-            margin: 0;
+            margin: 0.5rem 0;
         }
 
         input[type="submit"] {
@@ -306,8 +306,9 @@
 
     #subject-choices {
         display: grid;
-        grid-template-columns: 50% 50%;
+        grid-template-columns: calc(50% - 0.5rem) calc(50% - 0.5rem);
         gap: 1rem;
+        overflow: hidden;
         .subject {
             width: 100%;
             display: flex;
@@ -350,12 +351,6 @@
     #submit-button:disabled {
         background-color: #f1f5f9;
         cursor: not-allowed;
-    }
-
-    #former-choices {
-        p {
-            margin: 0;
-        }
     }
 
     #back-link {
