@@ -8,10 +8,10 @@
     let secondarySelection: string | null = null;
     let done = false;
 
-    // let data: object | null = null;
-    let data: object | null = JSON.parse(
-        '{"id":"4009","stufe":"8","gebdat":"2005-11-16","erstwahl":"Ökologie","zweitwahl":null,"subjects":[{"fach":"Informatik"},{"fach":"\\u00d6kologie"},{"fach":"Cultural Studies"},{"fach":"Spanisch"},{"fach":"Franz\\u00f6sisch"}]}'
-    );
+    let data: object | null = null;
+    // let data: object | null = JSON.parse(
+    //     '{"id":"4009","stufe":"8","gebdat":"2005-11-16","erstwahl":"Ökologie","zweitwahl":null,"subjects":[{"fach":"Informatik"},{"fach":"\\u00d6kologie"},{"fach":"Cultural Studies"},{"fach":"Spanisch"},{"fach":"Franz\\u00f6sisch"}]}'
+    // );
     let loading = false;
     $: secondarySelectionAvailable = ((data || {})["stufe"] || "") !== "6";
 
@@ -84,9 +84,19 @@
 </script>
 
 <main>
+    <a id="logo" href="./">
+        <img src="./logo.svg" alt="Logo" />
+        <h1>Gymnasium Haan</h1>
+    </a>
     <div id="form" class:expanded-form={secondarySelectionAvailable && data}>
         {#if error}
-            <div id="error">Joa nee eher nicht bro</div>
+            <div id="error">
+                {#if errorMessage}
+                    {errorMessage}
+                {:else}
+                    Joa nee eher nicht bro
+                {/if}
+            </div>
         {/if}
         {#if loading}
             Loading...
@@ -220,12 +230,38 @@
 </main>
 
 <style lang="scss">
+    #logo {
+        margin-bottom: auto;
+
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        height: 2.8rem;
+        gap: 1rem;
+        color: #1e293b;
+        text-decoration: none;
+
+        img {
+            height: 100%;
+        }
+
+        h1 {
+            font-weight: 400;
+            margin: 0;
+            text-transform: uppercase;
+
+            font-size: 1.5rem;
+        }
+    }
+
     main {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
         min-height: 100vh;
         padding: 2rem;
+        gap: 1rem;
         background-color: #e2e8f0;
 
         color: #1e293b;
@@ -233,6 +269,8 @@
     }
 
     #form {
+        margin-bottom: auto;
+
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -258,6 +296,7 @@
             }
 
             #submit-button {
+                margin-top: 2rem;
                 width: 50%;
             }
         }
@@ -365,6 +404,16 @@
     }
 
     @media (max-width: 600px) {
+        #logo {
+            img {
+                height: 2.4rem;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+        }
+
         main {
             padding: 1rem;
         }
